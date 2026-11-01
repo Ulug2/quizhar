@@ -65,7 +65,7 @@ await page.getByRole("button", { name: /Карточки/ }).tap();
 await shot("cards-setup");
 await page.getByRole("button", { name: "Начать" }).tap();
 await shot("card-front");
-await page.getByText("Нажми, чтобы увидеть ответ").tap();
+await page.getByText("Нажми, чтобы увидеть ответ").last().tap();
 await shot("card-back");
 await page.getByRole("button", { name: "Знаю" }).tap();
 await page.waitForTimeout(150);

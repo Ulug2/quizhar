@@ -1,5 +1,5 @@
-import { animate, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from "framer-motion";
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from "react";
+import { animate, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import { useStore } from "../lib/store";
 import { pickQuestions } from "../lib/session";
 import { useExplanation } from "../lib/explain";
@@ -37,6 +37,7 @@ export function Flashcards({ deckId, onlyUnknown, shuffle }: { deckId: string; o
   const streak = useRef(0);
   const knowBtn = useRef<HTMLButtonElement>(null);
   const card = useRef<CardHandle>(null);
+  const progress = useMotionValue(0);
 
   const q: Question | undefined = questions[ids[i]];
   const nextQ: Question | undefined = questions[ids[i + 1]];
@@ -56,6 +57,9 @@ export function Flashcards({ deckId, onlyUnknown, shuffle }: { deckId: string; o
     }
     setI((n) => n + 1);
   };
+
+  // After the swap, the old under-card is on top at full size and a new one waits underneath.
+  useLayoutEffect(() => progress.set(0), [i, progress]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -101,8 +105,8 @@ export function Flashcards({ deckId, onlyUnknown, shuffle }: { deckId: string; o
       ) : (
         <>
           <div className="relative mx-4 mt-5 flex-1">
-            {nextQ && <div className="absolute inset-0 translate-y-3 scale-[0.95] rounded-[28px] bg-surface" aria-hidden="true" />}
-            {q && <SwipeCard key={`${q.id}-${i}`} ref={card} q={q} onAnswered={onAnswered} />}
+            {nextQ && <UnderCard key={`${nextQ.id}-${i + 1}`} q={nextQ} progress={progress} />}
+            {q && <SwipeCard key={`${q.id}-${i}`} ref={card} q={q} onAnswered={onAnswered} progress={progress} />}
           </div>
 
           <div className="safe-bottom grid grid-cols-2 gap-3 px-4 pt-5">
@@ -124,22 +128,56 @@ interface CardHandle {
   flip: () => void;
 }
 
+type Gesture = {
+  id: number;
+  x0: number;
+  y0: number;
+  mode: "pending" | "drag" | "scroll";
+  /** Recent pointer samples for release velocity. */
+  samples: { x: number; t: number }[];
+};
+
 /**
- * One card. It follows the finger exactly while held; on release it either flies off (if dragged
- * past the threshold) or springs back. The flip is two flat half-turns, so the face at rest is never
- * rotated and everything on it stays tappable and scrollable.
+ * One card, swiped like Tinder. The gesture is handled by hand rather than by a drag library:
+ * the first few pixels decide the direction. Sideways, the card is captured and follows the finger
+ * in both axes, tilting around the point it was grabbed. Vertically, the browser scrolls the card's
+ * content natively. On release, a card dragged far enough (or flicked fast enough) flies off along
+ * its path; otherwise it springs back.
  */
-function SwipeCard({ q, onAnswered, ref }: { q: Question; onAnswered: (knows: boolean) => void; ref?: Ref<CardHandle> }) {
+function SwipeCard({
+  q,
+  onAnswered,
+  progress,
+  ref,
+}: {
+  q: Question;
+  onAnswered: (knows: boolean) => void;
+  /** 0..1, how close the card is to being swiped away; drives the card underneath. */
+  progress: MotionValue<number>;
+  ref?: Ref<CardHandle>;
+}) {
   const reduce = useReducedMotion();
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-400, 0, 400], [-14, 0, 14]);
+  const y = useMotionValue(0);
+  const grabSign = useRef(1);
+  const rotate = useTransform(x, (v) => (v / window.innerWidth) * 18 * grabSign.current);
   const threshold = () => window.innerWidth * SWIPE_SHARE;
   const knowOpacity = useTransform(x, (v) => Math.min(1, Math.max(0, v / threshold())));
   const learnOpacity = useTransform(x, (v) => Math.min(1, Math.max(0, -v / threshold())));
-  const rotY = useMotionValue(0);
+  const flipScale = useMotionValue(1);
   const [side, setSide] = useState<"front" | "back">("front");
   const busy = useRef(false);
   const gone = useRef(false);
+  const gesture = useRef<Gesture | null>(null);
+  const el = useRef<HTMLDivElement>(null);
+  const anims = useRef<{ stop: () => void }[]>([]);
+
+  useEffect(() => x.on("change", (v) => progress.set(Math.min(1, Math.abs(v) / threshold()))), [x, progress]);
+
+  const stopAnims = () => {
+    anims.current.forEach((a) => a.stop());
+    anims.current = [];
+  };
 
   const flip = async () => {
     if (busy.current || gone.current) return;
@@ -147,49 +185,107 @@ function SwipeCard({ q, onAnswered, ref }: { q: Question; onAnswered: (knows: bo
     if (reduce) {
       setSide((s) => (s === "front" ? "back" : "front"));
     } else {
-      await animate(rotY, 90, { duration: 0.1, ease: [0.4, 0, 1, 1] });
+      await animate(flipScale, 0, { duration: 0.09, ease: [0.4, 0, 1, 1] });
       setSide((s) => (s === "front" ? "back" : "front"));
-      rotY.set(-90);
-      await animate(rotY, 0, { duration: 0.17, ease: [0, 0, 0.2, 1] });
+      await animate(flipScale, 1, { duration: 0.15, ease: [0, 0, 0.2, 1] });
     }
     busy.current = false;
   };
 
-  const flyOut = async (knows: boolean, velocity = 0) => {
+  const flyOut = async (knows: boolean, vx = 0) => {
     if (gone.current) return;
     gone.current = true;
-    const target = (knows ? 1 : -1) * (window.innerWidth + 160);
-    await animate(x, target, { type: "tween", duration: 0.3, ease: [0.25, 1, 0.5, 1], velocity });
+    stopAnims();
+    const w = window.innerWidth;
+    const dir = knows ? 1 : -1;
+    const tx = dir * w * 1.5;
+    const ty = y.get() * 1.5;
+    const speed = Math.max(Math.abs(vx), 1400);
+    const duration = Math.min(0.38, Math.max(0.2, Math.abs(tx - x.get()) / speed));
+    await Promise.all([
+      animate(x, tx, { duration, ease: [0.2, 0.7, 0.4, 1] }),
+      animate(y, ty, { duration, ease: [0.2, 0.7, 0.4, 1] }),
+    ]);
     onAnswered(knows);
+  };
+
+  const springBack = (vx = 0, vy = 0) => {
+    const opts = { type: "spring" as const, stiffness: 520, damping: 34 };
+    anims.current = [animate(x, 0, { ...opts, velocity: vx }), animate(y, 0, { ...opts, velocity: vy })];
   };
 
   useImperativeHandle(ref, () => ({ fling: (k) => flyOut(k), flip }));
 
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (gone.current) return;
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (gone.current || gesture.current) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    stopAnims();
+    const rect = el.current!.getBoundingClientRect();
+    // Grabbed in the bottom half, the card tilts the other way, like a real card.
+    grabSign.current = e.clientY < rect.top + rect.height / 2 ? 1 : -1;
+    gesture.current = {
+      id: e.pointerId,
+      x0: e.clientX - x.get(),
+      y0: e.clientY - y.get(),
+      mode: "pending",
+      samples: [{ x: e.clientX, t: performance.now() }],
+    };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const g = gesture.current;
+    if (!g || g.id !== e.pointerId || g.mode === "scroll") return;
+    const dx = e.clientX - g.x0;
+    const dy = e.clientY - g.y0;
+    if (g.mode === "pending") {
+      if (Math.abs(dx - x.get()) < 6 && Math.abs(dy - y.get()) < 6) return;
+      if (Math.abs(dx - x.get()) > Math.abs(dy - y.get())) {
+        g.mode = "drag";
+        el.current?.setPointerCapture(e.pointerId);
+      } else {
+        g.mode = "scroll";
+        return;
+      }
+    }
+    x.set(dx);
+    y.set(dy);
+    const t = performance.now();
+    g.samples.push({ x: e.clientX, t });
+    while (g.samples.length > 2 && t - g.samples[0].t > 90) g.samples.shift();
+  };
+
+  const release = (e: React.PointerEvent, cancelled: boolean) => {
+    const g = gesture.current;
+    if (!g || g.id !== e.pointerId) return;
+    gesture.current = null;
+    if (g.mode === "pending" && !cancelled) {
+      if (!(e.target as HTMLElement).closest("button")) flip();
+      return;
+    }
+    if (g.mode !== "drag") return;
+    const first = g.samples[0];
+    const last = g.samples[g.samples.length - 1];
+    // Events can arrive bunched together; never divide by less than one frame.
+    const dt = Math.max(1 / 60, (last.t - first.t) / 1000);
+    const vx = (last.x - first.x) / dt;
     const dx = x.get();
-    if (Math.abs(dx) >= threshold()) flyOut(dx > 0, info.velocity.x);
-    else animate(x, 0, { type: "spring", stiffness: 420, damping: 32, velocity: info.velocity.x });
+    const far = Math.abs(dx) >= threshold();
+    const flick = Math.abs(vx) > 700 && Math.abs(dx) > 50 && Math.sign(vx) === Math.sign(dx);
+    if (!cancelled && (far || flick)) flyOut(dx > 0, vx);
+    else springBack(vx, 0);
   };
 
   return (
     <motion.div
-      className="absolute inset-0 touch-pan-y select-none"
-      style={{ x, rotate, transformOrigin: "50% 90%" }}
-      initial={{ scale: 0.95, y: 12 }}
-      animate={{ scale: 1, y: 0 }}
-      transition={softSpring}
-      drag="x"
-      dragMomentum={false}
-      dragElastic={0}
-      onDragEnd={onDragEnd}
-      onTap={(e) => {
-        // Taps on the card's own buttons don't flip it.
-        if ((e.target as HTMLElement).closest("button")) return;
-        flip();
-      }}
+      ref={el}
+      className="absolute inset-0 touch-pan-y select-none will-change-transform [-webkit-touch-callout:none] [&_*]:touch-pan-y"
+      style={{ x, y, rotate, transformOrigin: "50% 50%" }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={(e) => release(e, false)}
+      onPointerCancel={(e) => release(e, true)}
     >
-      <motion.div className="relative h-full w-full" style={{ rotateY: rotY, transformPerspective: 1200 }}>
+      <motion.div className="relative h-full w-full" style={{ scaleX: flipScale }}>
         {side === "front" ? <CardFront q={q} /> : <CardBack q={q} />}
       </motion.div>
 
@@ -199,6 +295,24 @@ function SwipeCard({ q, onAnswered, ref }: { q: Question; onAnswered: (knows: bo
       <motion.span style={{ opacity: learnOpacity }} className="pointer-events-none absolute top-5 right-5 rounded-full bg-black px-4 py-1.5 text-[15px] font-semibold text-ink ring-2 ring-ink">
         Ещё учу
       </motion.span>
+    </motion.div>
+  );
+}
+
+/** The next card, waiting underneath; it grows into place as the top card is dragged away. */
+function UnderCard({ q, progress }: { q: Question; progress: MotionValue<number> }) {
+  const scale = useTransform(progress, [0, 1], [0.94, 1]);
+  const y = useTransform(progress, [0, 1], [14, 0]);
+  return (
+    <motion.div
+      className="pointer-events-none absolute inset-0"
+      style={{ scale, y }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25 }}
+      aria-hidden="true"
+    >
+      <CardFront q={q} />
     </motion.div>
   );
 }

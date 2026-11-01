@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 import { softSpring } from "./ui";
+import { IconX } from "./Icons";
 
 export function Sheet({ open, onClose, children, label }: { open: boolean; onClose: () => void; children: ReactNode; label: string }) {
   const drag = useDragControls();
@@ -38,8 +39,17 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
               if (i.offset.y > 120 || i.velocity.y > 600) onClose();
             }}
           >
-            <div className="flex shrink-0 justify-center pt-3 pb-2 touch-none" onPointerDown={(e) => drag.start(e)}>
+            <div className="relative flex shrink-0 justify-center pt-3 pb-2 touch-none" onPointerDown={(e) => drag.start(e)}>
               <div className="h-1.5 w-10 rounded-full bg-active" />
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onClose}
+                aria-label="Закрыть"
+                className="absolute top-2.5 right-3 grid size-10 place-items-center rounded-full bg-raised text-muted hover:bg-active hover:text-ink"
+              >
+                <IconX size={18} />
+              </motion.button>
             </div>
             <div className="sheet-scroll safe-bottom overflow-y-auto px-5">{children}</div>
           </motion.div>
