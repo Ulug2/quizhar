@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../lib/store";
 import { Button, TopBar, fmt } from "../components/ui";
 import { Toggle } from "./DeckScreen";
+import { seedAll } from "../lib/explain";
 
 export function Settings() {
   const { settings, updateSettings, resetProgress, questions, explanations } = useStore();
@@ -31,6 +32,7 @@ export function Settings() {
             spellCheck={false}
             value={settings.accessCode}
             onChange={(e) => updateSettings({ accessCode: e.target.value.trim() })}
+            onBlur={() => seedAll()}
             className="mt-1 h-12 w-full rounded-[14px] bg-surface px-4 text-[16px] outline-none focus-visible:ring-2 focus-visible:ring-pink"
           />
           <p className="mt-1 text-[13px] text-faint">Нужен для объяснений и чтения необычных файлов.</p>

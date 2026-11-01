@@ -5,6 +5,7 @@ import { Button, fmt, plural, softSpring } from "./ui";
 import { IconFile, IconUpload } from "./Icons";
 import { importFiles, type ImportReport } from "../lib/importer";
 import { useStore } from "../lib/store";
+import { seedDeck } from "../lib/explain";
 
 const ACCEPT =
   ".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -46,6 +47,7 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
     onClose();
     setTimeout(() => setStep({ kind: "pick" }), 300);
     go({ name: "deck", deckId: id });
+    seedDeck(id);
   };
 
   return (

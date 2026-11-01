@@ -30,6 +30,8 @@ export interface Progress {
 
 export interface Explanation {
   why_correct: string;
+  /** Missing on explanations cached before examples were added. */
+  example?: string;
   wrong_options: { letter: string; why: string }[];
   mnemonic: string;
   key_link: string;

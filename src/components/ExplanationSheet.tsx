@@ -4,26 +4,8 @@ import { Sheet } from "./Sheet";
 import { IconRotate } from "./Icons";
 import { listChild, listParent } from "./ui";
 import { useStore } from "../lib/store";
-import { fetchExplanation, ApiError } from "../lib/api";
-import { LETTERS, type Explanation, type Question } from "../lib/types";
-
-const inflight = new Map<string, Promise<Explanation>>();
-
-export function loadExplanation(q: Question): Promise<Explanation> {
-  const cached = useStore.getState().explanations[q.id];
-  if (cached) return Promise.resolve(cached);
-  let p = inflight.get(q.id);
-  if (!p) {
-    p = fetchExplanation(q)
-      .then((e) => {
-        useStore.getState().setExplanation(q.id, e);
-        return e;
-      })
-      .finally(() => inflight.delete(q.id));
-    inflight.set(q.id, p);
-  }
-  return p;
-}
+import { explainError, loadExplanation } from "../lib/explain";
+import { LETTERS, type Question } from "../lib/types";
 
 export function ExplanationSheet({ question, open, onClose }: { question: Question | null; open: boolean; onClose: () => void }) {
   const explanation = useStore((s) => (question ? s.explanations[question.id] : undefined));
@@ -36,7 +18,7 @@ export function ExplanationSheet({ question, open, onClose }: { question: Questi
     setError(null);
     setLoading(true);
     loadExplanation(question)
-      .catch((e) => setError(e instanceof ApiError ? e.message : "Не получилось загрузить объяснение."))
+      .catch((e) => setError(explainError(e)))
       .finally(() => setLoading(false));
   }, [question]);
 
@@ -67,6 +49,7 @@ export function ExplanationSheet({ question, open, onClose }: { question: Questi
               {explanation.summary}
             </motion.p>
             <Section title="Почему это правильно">{explanation.why_correct}</Section>
+            {explanation.example && <Section title="Пример">{explanation.example}</Section>}
             <motion.section variants={listChild} className="rounded-[18px] bg-raised p-4">
               <h3 className="text-[14px] text-faint">Как запомнить</h3>
               <p className="mt-1 font-serif text-[24px] leading-[1.15] font-semibold italic text-pink-ink text-pretty">

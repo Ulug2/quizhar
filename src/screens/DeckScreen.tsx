@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { deckStats, useStore, type QuizMode } from "../lib/store";
-import { Button, Ring, TopBar, fmt, listChild, listParent, plural } from "../components/ui";
+import { Button, ProgressBar, Ring, TopBar, fmt, listChild, listParent, plural } from "../components/ui";
 import { IconChevron, IconEdit } from "../components/Icons";
 import { Sheet } from "../components/Sheet";
+import { seedDeck, useSeed } from "../lib/explain";
 
 type Setup = { kind: "cards" } | { kind: "quiz"; mode: "practice" | "exam" } | { kind: "edit" } | null;
 
@@ -52,6 +53,8 @@ export function DeckScreen({ deckId }: { deckId: string }) {
           <Count label="Учу" value={st.learning} />
           <Count label="Знаю" value={st.mastered} />
         </dl>
+
+        <SeedStatus deckId={deckId} />
       </section>
 
       <motion.div variants={listParent} initial="hidden" animate="show" className="mt-8 px-4">
@@ -101,6 +104,42 @@ export function DeckScreen({ deckId }: { deckId: string }) {
       />
       <EditDeck open={setup?.kind === "edit"} onClose={() => setSetup(null)} deckId={deckId} />
     </main>
+  );
+}
+
+/** Shows how many explanations the AI has prepared for this deck. Hidden once all are ready. */
+function SeedStatus({ deckId }: { deckId: string }) {
+  const ids = useStore((s) => s.decks[deckId]?.questionIds ?? []);
+  const ready = useStore((s) => ids.filter((id) => s.explanations[id]).length);
+  const { error, running } = useSeed();
+  const go = useStore((s) => s.go);
+  if (!ids.length || ready >= ids.length) return null;
+  return (
+    <div className="mt-3 rounded-[22px] bg-surface p-4" aria-live="polite">
+      {error ? (
+        <>
+          <p className="text-[15px]">Объяснения не готовятся: {error}</p>
+          <div className="mt-2 flex gap-4">
+            <button className="min-h-11 font-semibold text-pink-ink" onClick={() => seedDeck(deckId)}>
+              Попробовать снова
+            </button>
+            <button className="min-h-11 font-semibold text-muted" onClick={() => go({ name: "settings" })}>
+              Настройки
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="num text-[15px]">
+            ИИ готовит объяснения: {fmt.format(ready)} из {fmt.format(ids.length)}
+          </p>
+          <p className="mt-0.5 text-[13px] text-faint">
+            {running ? "Можно уже учиться. Держи приложение открытым, так будет быстрее." : "Продолжится, когда откроешь колоду."}
+          </p>
+          <ProgressBar value={ready / ids.length} className="mt-3" />
+        </>
+      )}
+    </div>
   );
 }
 
