@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* One ground (black), one ink (white), one accent (pink). Surfaces step up in tone, no lines or shadows at rest. */
+@theme {
+  --color-ground: #000000;
+  --color-surface: #111111;
+  --color-raised: #1c1c1c;
+  --color-active: #262626;
+  --color-line: #2a2a2a;
+  --color-ink: #ffffff;
+  --color-muted: #b4b4b4;
+  --color-faint: #949494;
+  --color-pink: #ff4d9d;
+  --color-pink-ink: #ff7ab6;
+  --color-pink-tint: #2b0f1d;
+  --color-pink-deep: #5c1a3a;
+  --color-bad: #f0607a;
+  --color-bad-tint: #241316;
+
+  --font-sans: "Onest", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant", "Iowan Old Style", Georgia, serif;
+
+  --radius-card: 22px;
+  --radius-inner: 14px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body,
+#root {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+textarea {
+  touch-action: manipulation;
+}
+
+button {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pink);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-pink);
+  color: #000;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 16px);
+}
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+.sheet-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.row-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 88px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+.text-pretty {
+  text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
