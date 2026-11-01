@@ -270,7 +270,7 @@ function SwipeCard({
     const vx = (last.x - first.x) / dt;
     const dx = x.get();
     const far = Math.abs(dx) >= threshold();
-    const flick = Math.abs(vx) > 700 && Math.abs(dx) > 50 && Math.sign(vx) === Math.sign(dx);
+    const flick = Math.abs(vx) > 550 && Math.abs(dx) > 45 && Math.sign(vx) === Math.sign(dx);
     if (!cancelled && (far || flick)) flyOut(dx > 0, vx);
     else springBack(vx, 0);
   };
