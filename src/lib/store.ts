@@ -16,9 +16,7 @@ let uid = 0;
 export type QuizMode = "practice" | "exam" | "learn" | "mistakes";
 
 export interface Settings {
-  name: string;
   accessCode: string;
-  customCompliments: string[];
   showOptionsOnCards: boolean;
   onboarded: boolean;
 }
@@ -64,7 +62,7 @@ const DEFAULT: Data = {
   questions: {},
   progress: {},
   explanations: {},
-  settings: { name: "Ажар", accessCode: "", customCompliments: [], showOptionsOnCards: false, onboarded: false },
+  settings: { accessCode: "", showOptionsOnCards: false, onboarded: false },
   streak: { lastDay: "", days: 0, answeredToday: 0, correctToday: 0 },
 };
 

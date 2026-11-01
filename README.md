@@ -1,37 +1,57 @@
-# Quizhar
+<div align="center">
 
-Study app for Azhar: upload TXT / DOCX / PDF test files and study them as flashcards,
-practice tests, mock exams and a "learn until memorised" mode, with AI explanations and
-memory tips. Made for iPhone (add it to the Home Screen), pink and black.
+# Quizhar 💗
 
-## How it works
+**A tiny study app made with love for Azhar.**
 
-- **Files are read in the browser.** `src/lib/parser.ts` understands the common formats
-  (`? / + / -`, `[✅] / ⚪`, `<question> / <variant>` with the first variant correct,
-  `A) … Ответ: B`) and tolerates OCR junk. Identical questions are merged.
-- **Unknown formats go to OpenAI** (`api/parse.ts`), in ~8k-character chunks.
-- **Explanations** (`api/explain.ts`) are generated on demand per question and cached on the phone.
-- **Answer options are never shuffled.** Only question order can be shuffled.
-- Progress, decks and explanations live in IndexedDB on the phone (no account).
+Pink, black, and full of compliments.
 
-## Run locally
+</div>
+
+---
+
+## What it is
+
+Azhar studies by learning every question and its answer by heart. Quizhar turns her test files into
+flashcards and practice exams, explains each answer, and tells her she's amazing every time she gets
+one right. Because she is.
+
+## What it can do
+
+- 📂 **Upload & go.** Drop in `.txt`, `.docx` or `.pdf` test files. Repeated questions are merged into one.
+- 🃏 **Flashcards.** Tap to flip, swipe right for *знаю*, left for *ещё учу*.
+- 📝 **Practice.** See right away whether each answer was right.
+- 🎓 **Mock exam.** No hints, an optional timer, and a score at the end.
+- 🧠 **Learn mode.** Missed questions come back until they stick.
+- 🔁 **Mistakes.** Only the questions that gave her trouble.
+- ✨ **Explanations.** Why the answer is right, why the others are wrong, and a memory trick.
+- 💌 **Compliments.** *Умница моя. Жаным, сол правильно. Молодец, жаным. Красотка моя.* And a burst of hearts.
+- 🔤 **Answers stay where they are.** If the answer is B, it's always B.
+
+## For the boyfriend (setup)
 
 ```bash
 npm install
 echo "OPENAI_API_KEY=sk-proj-..." > .env.local   # optional: ACCESS_CODE=..., OPENAI_MODEL=...
-npm run dev              # an OPENAI_API_KEY exported in your shell overrides .env.local; open the Network URL on the iPhone (same Wi-Fi)
-npm run test:parser      # parses every file in input/ and prints a report
+env -u OPENAI_API_KEY npm run dev                 # your shell's own key would override .env.local
+npm run test:parser                               # checks every file in input/
 ```
 
-## Deploy to Vercel
+It's deployed on Vercel at **https://quizhar.vercel.app**, and every push to `main` redeploys it.
+Secrets (`OPENAI_API_KEY`, `ACCESS_CODE`) live in the Vercel project settings, never in the code.
 
-```bash
-vercel login
-vercel link
-vercel env add OPENAI_API_KEY production
-vercel env add ACCESS_CODE production   # recommended, so nobody else can spend the key
-vercel deploy --prod
-```
+On her iPhone: Safari → Share → **Add to Home Screen** → enter the access code once in settings.
 
-On the iPhone: open the URL in Safari → Share → **Add to Home Screen**. If you set
-`ACCESS_CODE`, enter it once in the app's settings.
+## How it works
+
+- Files are read on the phone. `src/lib/parser.ts` understands the usual formats
+  (`? / + / -`, `[✅] / ⚪`, `<question> / <variant>`, `A) … Ответ: B`) and forgives messy OCR.
+- Unusual formats are read by OpenAI (`api/parse.ts`). Explanations come from `api/explain.ts`
+  and are saved on the phone, so each one is only generated once.
+- Progress and decks stay on her phone. No accounts, no tracking.
+
+<div align="center">
+
+Made with 💗 for Ажар
+
+</div>

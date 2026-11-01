@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { useStore } from "../lib/store";
 import { Button } from "../components/ui";
+import { NAME } from "../lib/compliments";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Welcome() {
-  const name = useStore((s) => s.settings.name) || "Ажар";
   const update = useStore((s) => s.updateSettings);
-  const words = ["Привет,", `${name}`];
+  const words = ["Привет,", `${NAME}`];
 
   return (
     <main className="safe-top safe-bottom relative flex min-h-dvh flex-col overflow-hidden px-6">
@@ -61,11 +61,11 @@ export function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.85, ease }}
         >
-          Загрузи свои вопросы — и они станут карточками, тестами и пробными экзаменами. С объяснениями и подсказками, как запомнить.
+          Это твоё личное место для учёбы, сделанное с любовью. Загрузи вопросы, и они станут карточками и тестами, а за каждый верный ответ тебя ждёт комплимент.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 1, ease }}>
           <Button className="mt-8 w-full" onClick={() => update({ onboarded: true })}>
-            Начать
+            Начнём, жаным
           </Button>
         </motion.div>
       </div>

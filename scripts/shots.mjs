@@ -49,7 +49,7 @@ const shot = async (name) => {
 
 await page.goto(url);
 await shot("welcome");
-await page.getByRole("button", { name: "Начать" }).tap();
+await page.getByRole("button", { name: "Начнём, жаным" }).tap();
 await shot("home-empty");
 
 await page.getByRole("button", { name: /Загрузить вопросы/ }).tap();

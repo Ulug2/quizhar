@@ -365,11 +365,11 @@ function OptionButton({
 }
 
 function verdict(pct: number) {
-  if (pct >= 90) return "Блестяще";
-  if (pct >= 75) return "Отлично";
-  if (pct >= 60) return "Хорошо, почти готова";
-  if (pct >= 40) return "Неплохо для начала";
-  return "Будем учить вместе";
+  if (pct >= 90) return "Бәрекелді, жаным!";
+  if (pct >= 75) return "Умница моя!";
+  if (pct >= 60) return "Почти готова, красотка";
+  if (pct >= 40) return "Хорошее начало, солнышко";
+  return "Выучим вместе, жаным";
 }
 
 function Results({
@@ -384,7 +384,6 @@ function Results({
   onExit: () => void;
 }) {
   const questions = useStore((s) => s.questions);
-  const name = useStore((s) => s.settings.name) || "Ажар";
   const [explainQ, setExplainQ] = useState<Question | null>(null);
   const right = answers.filter((a) => a.correct).length;
   const pct = answers.length ? Math.round((right / answers.length) * 100) : 0;
@@ -409,7 +408,7 @@ function Results({
             </p>
           </div>
         </motion.div>
-        {pct >= 60 && <p className="mt-5 font-serif text-[22px] italic text-pink-ink">{name}, я тобой горжусь</p>}
+        {pct >= 60 && <p className="mt-5 font-serif text-[22px] italic text-pink-ink">Ажар, я тобой горжусь</p>}
 
         {wrong.length > 0 && (
           <>
@@ -465,7 +464,6 @@ function Results({
 }
 
 function LearnRoundDone({ learned, remaining, onNext, onExit }: { learned: number; remaining: number; onNext: () => void; onExit: () => void }) {
-  const name = useStore((s) => s.settings.name) || "Ажар";
   useEffect(() => {
     celebrate(window.innerWidth / 2, window.innerHeight / 3, 0);
   }, []);
@@ -475,7 +473,7 @@ function LearnRoundDone({ learned, remaining, onNext, onExit }: { learned: numbe
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={softSpring} className="safe-bottom flex flex-1 flex-col px-4 pt-10">
         <h2 className="font-serif text-[40px] leading-[1] font-semibold text-balance">Раунд пройден</h2>
         <p className="mt-4 text-[17px] text-muted">
-          {name}, ещё {fmt.format(learned)} {plural(learned, "ответ", "ответа", "ответов")} в памяти.
+          Умница моя, ещё {fmt.format(learned)} {plural(learned, "ответ", "ответа", "ответов")} в памяти.
           {remaining > 0 ? ` Осталось ${fmt.format(remaining)}.` : " Это была последняя порция."}
         </p>
         <div className="mt-auto space-y-3 pt-8">

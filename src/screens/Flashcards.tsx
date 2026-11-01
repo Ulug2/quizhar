@@ -272,7 +272,6 @@ function RoundDone({
   onRepeatAll: () => void;
   onExit: () => void;
 }) {
-  const name = useStore((s) => s.settings.name);
   const total = known + unknown;
   const allKnown = unknown === 0 && total > 0;
   useEffect(() => {
@@ -281,7 +280,7 @@ function RoundDone({
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={softSpring} className="safe-bottom flex flex-1 flex-col px-4 pt-10">
       <h2 className="font-serif text-[40px] leading-[1] font-semibold text-balance">
-        {total === 0 ? "Здесь пока пусто" : allKnown ? `${name || "Ажар"}, всё знаешь!` : "Круг пройден"}
+        {total === 0 ? "Здесь пока пусто" : allKnown ? "Умница моя, всё знаешь!" : "Круг пройден"}
       </h2>
       {total > 0 && (
         <dl className="mt-8 grid grid-cols-2 divide-x divide-line rounded-[22px] bg-surface py-5 text-center">

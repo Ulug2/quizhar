@@ -4,17 +4,11 @@ import { deckStats, useStore } from "../lib/store";
 import { Button, ProgressBar, fmt, listChild, listParent, plural } from "../components/ui";
 import { IconChevron, IconPlus, IconSettings } from "../components/Icons";
 import { ImportSheet } from "../components/ImportSheet";
+import { greeting, lineOfTheDay } from "../lib/compliments";
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Доброй ночи";
-  if (h < 12) return "Доброе утро";
-  if (h < 18) return "Добрый день";
-  return "Добрый вечер";
-}
 
 export function Home() {
-  const { decks, deckOrder, progress, streak, settings, go } = useStore();
+  const { decks, deckOrder, progress, streak, go } = useStore();
   const [importing, setImporting] = useState(false);
   const isToday = streak.lastDay === new Date().toLocaleDateString("sv-SE");
   const streakAlive = isToday || streak.lastDay === new Date(Date.now() - 864e5).toLocaleDateString("sv-SE");
@@ -40,8 +34,16 @@ export function Home() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="mt-6 font-serif text-[40px] leading-[1] font-semibold tracking-[-0.02em] text-balance"
       >
-        {greeting()}, {settings.name || "Ажар"}
+        {greeting()}
       </motion.h1>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-3 text-[17px] text-muted"
+      >
+        {lineOfTheDay()}
+      </motion.p>
 
       <motion.dl
         initial={{ opacity: 0 }}
@@ -64,7 +66,7 @@ export function Home() {
           onClick={() => setImporting(true)}
           className="mt-3 w-full rounded-[22px] border-2 border-dashed border-active px-5 py-8 text-left hover:border-pink-deep"
         >
-          <p className="text-[17px] font-medium">Пока нет ни одной колоды</p>
+          <p className="text-[17px] font-medium">Здесь пока пусто, жаным</p>
           <p className="mt-1 text-[15px] text-muted">Загрузи файл с вопросами (TXT, DOCX или PDF), и можно сразу учить.</p>
         </motion.button>
       ) : (
