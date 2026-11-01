@@ -134,7 +134,25 @@ export function Flashcards({ deckId, onlyUnknown, shuffle }: { deckId: string; o
                   }}
                   onTap={() => setFlipped((f) => !f)}
                 >
-                  <FlipCard flipped={flipped} front={<CardFront q={q} hidden={flipped} />} back={<CardBack q={q} hidden={!flipped} onExplain={() => setExplain(true)} />} />
+                  <FlipCard flipped={flipped} front={<CardFront q={q} hidden={flipped} />} back={<CardBack q={q} hidden={!flipped} />} />
+                  <AnimatePresence>
+                    {flipped && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0, transition: { delay: 0.18 } }}
+                        exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                        whileTap={{ scale: 0.95 }}
+                        onPointerDownCapture={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExplain(true);
+                        }}
+                        className="absolute inset-x-6 bottom-6 z-10 flex min-h-12 items-center justify-center gap-2 rounded-full bg-black text-[15px] font-semibold text-pink hover:bg-[#1a1a1a]"
+                      >
+                        <IconSpark size={18} /> Объяснение и запоминалка
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
 
                   <motion.span
                     style={{ opacity: knowOpacity }}
@@ -218,7 +236,7 @@ function CardFront({ q, hidden }: { q: Question; hidden: boolean }) {
   );
 }
 
-function CardBack({ q, hidden, onExplain }: { q: Question; hidden: boolean; onExplain: () => void }) {
+function CardBack({ q, hidden }: { q: Question; hidden: boolean }) {
   const correct = q.options.map((o, i) => ({ ...o, letter: LETTERS[i] })).filter((o) => o.correct);
   const longest = correct.reduce((m, o) => Math.max(m, o.text.length), 0);
   return (
@@ -235,17 +253,8 @@ function CardBack({ q, hidden, onExplain }: { q: Question; hidden: boolean; onEx
           </div>
         ))}
       </div>
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onExplain();
-        }}
-        onPointerDownCapture={(e) => e.stopPropagation()}
-        className="mt-4 flex min-h-12 items-center justify-center gap-2 rounded-full bg-black text-[15px] font-semibold text-pink hover:bg-[#1a1a1a]"
-      >
-        <IconSpark size={18} /> Объяснение и запоминалка
-      </motion.button>
+      {/* Room for the explanation button, which sits outside the 3D card so taps always land. */}
+      <div className="mt-4 h-12 shrink-0" />
     </div>
   );
 }
