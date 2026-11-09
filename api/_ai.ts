@@ -1,7 +1,10 @@
 import OpenAI from "openai";
 
-/** Override with OPENAI_MODEL on Vercel if you want a different model. */
-export const MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
+/**
+ * gpt-5.4-mini costs about 7x less than gpt-5.5 ($0.75 / $4.50 vs $5 / $30 per million tokens)
+ * and is plenty for short study explanations. Override with OPENAI_MODEL on Vercel.
+ */
+export const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
 
 let client: OpenAI | null = null;
 export function ai(): OpenAI {
@@ -26,7 +29,11 @@ export function checkAccess(req: Request): Response | null {
 }
 
 export function apiError(err: unknown): Response {
-  if (err instanceof OpenAI.RateLimitError) return json({ error: "rate_limited" }, 429);
+  if (err instanceof OpenAI.RateLimitError) {
+    // OpenAI reports an empty balance as a 429 too; retrying that only wastes time.
+    if (err.code === "insufficient_quota" || err.code === "credit_balance_exhausted") return json({ error: "no_credits" }, 402);
+    return json({ error: "rate_limited" }, 429);
+  }
   if (err instanceof OpenAI.AuthenticationError) return json({ error: "bad_api_key" }, 500);
   if (err instanceof OpenAI.APIError) return json({ error: "api_error", detail: err.message }, 502);
   return json({ error: "server_error", detail: String(err) }, 500);

@@ -59,6 +59,7 @@ export const useSeed = create<SeedState>(() => ({ error: null, running: false })
 
 const queue: Question[] = [];
 const queued = new Set<string>();
+const attempts = new Map<string, number>();
 let active = 0;
 
 function pump() {
@@ -73,12 +74,17 @@ function pump() {
       .then(() => queued.delete(q.id))
       .catch((e) => {
         const code = e instanceof ApiError ? e.code : "server_error";
+        const tries = (attempts.get(q.id) ?? 0) + 1;
+        attempts.set(q.id, tries);
         if (code === "rate_limited" || code === "api_error" || code === "server_error") {
-          // Temporary: try this one again a bit later.
-          setTimeout(() => {
-            queue.push(q);
-            pump();
-          }, 8000);
+          // Temporary: try this one again a bit later, at most three times, then skip it.
+          // It will still load on demand when she flips the card.
+          if (tries < 3)
+            setTimeout(() => {
+              queue.push(q);
+              pump();
+            }, 8000);
+          else queued.delete(q.id);
           return;
         }
         // Needs the user (wrong code, offline, no key): stop and say so.
