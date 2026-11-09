@@ -3,6 +3,7 @@ import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useSt
 import { useStore } from "../lib/store";
 import { pickQuestions } from "../lib/session";
 import { useExplanation } from "../lib/explain";
+import { Rich } from "../components/Rich";
 import { LETTERS, type Question } from "../lib/types";
 import { Button, ProgressBar, TopBar, fmt, softSpring } from "../components/ui";
 import { IconCheck, IconRotate, IconX } from "../components/Icons";
@@ -361,15 +362,15 @@ function CardBack({ q }: { q: Question }) {
         <div className="mt-6 rounded-[20px] bg-black p-4 text-ink">
           {ex ? (
             <div className="space-y-4">
-              <p className="text-[16px] leading-snug font-medium text-pretty">{ex.summary}</p>
+              <p className="text-[16px] leading-snug font-medium text-pretty"><Rich text={ex.summary} /></p>
               <div>
                 <p className="text-[13px] text-faint">Как запомнить</p>
-                <p className="mt-0.5 font-serif text-[22px] leading-[1.15] font-semibold italic text-pink-ink text-pretty">{ex.mnemonic}</p>
-                <p className="mt-1.5 text-[14px] text-muted">{ex.key_link}</p>
+                <p className="mt-0.5 font-serif text-[22px] leading-[1.15] font-semibold italic text-pink-ink text-pretty"><Rich text={ex.mnemonic} /></p>
+                <p className="mt-1.5 text-[14px] text-muted"><Rich text={ex.key_link} /></p>
               </div>
-              <Block title="Почему так">{ex.why_correct}</Block>
-              {ex.example && <Block title="Пример">{ex.example}</Block>}
-              {ex.wrong_options.length > 0 && (
+              <Block title="Почему так"><Rich text={ex.why_correct} /></Block>
+              {ex.example && <Block title="Пример"><Rich text={ex.example} /></Block>}
+              {!!ex.wrong_options?.length && (
                 <div>
                   <p className="text-[13px] text-faint">Почему не другие</p>
                   <ul className="mt-1.5 space-y-2">

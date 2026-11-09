@@ -5,6 +5,8 @@ import OpenAI from "openai";
  * and is plenty for short study explanations. Override with OPENAI_MODEL on Vercel.
  */
 export const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+/** Hidden "thinking" is billed as output, so keep it minimal for these short answers. */
+export const REASONING = (process.env.OPENAI_REASONING || "low") as "none" | "minimal" | "low" | "medium";
 
 let client: OpenAI | null = null;
 export function ai(): OpenAI {

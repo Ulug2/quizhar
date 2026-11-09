@@ -5,6 +5,7 @@ import { IconRotate } from "./Icons";
 import { listChild, listParent } from "./ui";
 import { useStore } from "../lib/store";
 import { explainError, loadExplanation } from "../lib/explain";
+import { Rich } from "./Rich";
 import { LETTERS, type Question } from "../lib/types";
 
 export function ExplanationSheet({ question, open, onClose }: { question: Question | null; open: boolean; onClose: () => void }) {
@@ -46,18 +47,18 @@ export function ExplanationSheet({ question, open, onClose }: { question: Questi
         {explanation ? (
           <motion.div variants={listParent} initial="hidden" animate="show" className="mt-6 space-y-6">
             <motion.p variants={listChild} className="text-[18px] leading-snug font-medium text-pretty">
-              {explanation.summary}
+              <Rich text={explanation.summary} />
             </motion.p>
-            <Section title="Почему это правильно">{explanation.why_correct}</Section>
-            {explanation.example && <Section title="Пример">{explanation.example}</Section>}
+            <Section title="Почему это правильно"><Rich text={explanation.why_correct} /></Section>
+            {explanation.example && <Section title="Пример"><Rich text={explanation.example} /></Section>}
             <motion.section variants={listChild} className="rounded-[18px] bg-raised p-4">
               <h3 className="text-[14px] text-faint">Как запомнить</h3>
               <p className="mt-1 font-serif text-[24px] leading-[1.15] font-semibold italic text-pink-ink text-pretty">
-                {explanation.mnemonic}
+                <Rich text={explanation.mnemonic} />
               </p>
-              <p className="mt-3 text-[15px] text-muted">{explanation.key_link}</p>
+              <p className="mt-3 text-[15px] text-muted"><Rich text={explanation.key_link} /></p>
             </motion.section>
-            {explanation.wrong_options.length > 0 && (
+            {!!explanation.wrong_options?.length && (
               <motion.section variants={listChild}>
                 <h3 className="text-[14px] text-faint">Почему не другие</h3>
                 <ul className="mt-2 space-y-3">
